@@ -29,6 +29,17 @@ async function run() {
     await client.connect();
 
 
+    // Collections
+    const usersCollection = client.db('danceDB').collection('users');
+
+
+
+    // users collection apis
+    app.post('/users', async(req, res) => {
+        const user = req.body;
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+    })
 
 
     // Send a ping to confirm a successful connection
