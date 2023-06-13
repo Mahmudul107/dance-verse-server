@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb"); // mongodb
+const jwt = require('jsonwebtoken'); // jsonwebtoken
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -28,6 +29,14 @@ async function run() {
 
     // Collections
     const usersCollection = client.db("danceDB").collection("users");
+
+
+
+    app.post('/jwt', (req, res) =>{
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: '1h'})
+      res.send({token});
+    })
 
     // users collection apis
     app.get("/users", async (req, res) => {
@@ -67,7 +76,7 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          role: `admin`,
+          role: `instructor`,
         },
       };
       const result = await usersCollection.updateOne(filter, updateDoc);
@@ -76,7 +85,7 @@ async function run() {
 
 
 
-    
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
