@@ -79,9 +79,9 @@ async function run() {
 
     // first security check
     app.get('/users/admin/:email', verifyJWT, async (req, res) => {
-      const email = req.body.email;
+      const email = req.params.email;
 
-      if(req.decoded.email !== email) {
+      if( req.decoded.email !== email ) {
         res.send({admin: false})
       }
 
@@ -118,6 +118,21 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
+
+
+
+    app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if( req.decoded.email !== email ) {
+        res.send({instructor: false})
+      }
+
+      const query = {email: email}
+      const user = await usersCollection.findOne(query)
+      const result = {instructor: user.role === 'instructor'}
+      res.send(result)
+    })
 
 
 
