@@ -73,18 +73,6 @@ async function run() {
       next();
     };
 
-    // Warning: use verifyJWT before using verifyInstructor
-    // const verifyInstructor = async (req, res, next) => {
-    //   const email = req.decoded.email;
-    //   const query = { email: email };
-    //   const user = await usersCollection.findOne(query);
-    //   if (user?.role !== "instructor") {
-    //     return res
-    //       .status(403)
-    //       .send({ error: true, message: "forbidden message" });
-    //   }
-    //   next();
-    // };
 
     // Modify the verifyInstructor middleware
     const verifyInstructor = async (req, res, next) => {
@@ -117,14 +105,10 @@ async function run() {
       res.send(users);
     });
 
+    // Creating users collection apis
     app.post("/users", async (req, res) => {
       const user = req.body;
       console.log(user);
-      // const query = {email: user.email}
-      // const existingUser = await usersCollection.findOne(query);
-      // if (existingUser){
-      //     return res.send({message: 'User already exists'})
-      // }
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
