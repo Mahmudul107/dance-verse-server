@@ -51,6 +51,7 @@ async function run() {
     // Collections
     const usersCollection = client.db("danceDB").collection("users");
     const classesCollection = client.db("danceDB").collection("classes");
+    const selectedClassesCollection = client.db("danceDB").collection("selectedClasses");
 
     app.post("/jwt", (req, res) => {
       const user = req.body;
@@ -89,15 +90,87 @@ async function run() {
 
     // Class collection
     app.get("/classes", async (req, res) => {
+      const query = { status: "Approved" };
+      const filter = {
+        sort: { enrolled_students: -1 },
+      };
+      const result = await classesCollection.find(query, filter).toArray();
+      res.send(result);
+    });
+
+   
+    // Get all classes
+    app.get("/all-class", async (req, res) => {
       const result = await classesCollection.find().toArray();
       res.send(result);
     });
 
-    app.post("/classes", verifyJWT, verifyInstructor, async (req, res) => {
-      const newClass = req.body;
-      const result = await classesCollection.insertOne(newClass);
+    // Approve or deny a class api
+    app.patch("/class-status/:id", async (req, res) => {
+      const id = req.params.id;
+      const status = req.query.status;
+      const query = { _id: new ObjectId(id) };
+      const updatedStatus = {
+        $set: {
+          status: status,
+        },
+      };
+
+      const result = await classesCollection.updateOne(query, updatedStatus);
       res.send(result);
     });
+
+    // feedback api
+    app.patch("/class-feedback/:id", async (req, res) => {
+      const id = req.params.id;
+      const feedback = req.body.feedback;
+
+      const query = { _id: new ObjectId(id) };
+      const updatedFeedback = {
+        $set: {
+          feedback: feedback,
+        },
+      };
+      const result = await classesCollection.updateOne(query, updatedFeedback);
+      res.send(result);
+    });
+
+
+     // ------------------------ Student related api---------------------
+    // select class
+    app.post("/select-class", async (req, res) => {
+      const selectedClassInfo = req.body;
+      const result = await selectedClassesCollection.insertOne(
+        selectedClassInfo
+      );
+      res.send(result);
+    });
+
+    app.get("/select-class", async (req, res) => {
+      const classes = await selectedClassesCollection.find().toArray();
+      res.send(classes);
+    })
+
+    // Get selected student's classes by email
+    app.get("/select-class/:email", async (req, res) => {
+      const email = req.params.email;
+      // console.log(email);
+      // const query = { email: email };
+      // console.log(query);
+      const result = await selectedClassesCollection.find().toArray();
+      console.log(result);
+      res.send(result);
+    });
+
+    // Delete selected class
+    app.delete("/select-class/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await selectedClassesCollection.deleteOne(query);
+      res.send(result);
+    });
+
+
 
     // users collection apis
     app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
@@ -140,6 +213,8 @@ async function run() {
       res.send(result);
     });
 
+
+    // ----------------------Instructor API------------------------
     // Make instructor
     app.patch("/users/instructor/:id", async (req, res) => {
       const id = req.params.id;
@@ -153,6 +228,7 @@ async function run() {
       res.send(result);
     });
 
+
     app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
 
@@ -165,6 +241,23 @@ async function run() {
       const result = { instructor: user.role === "instructor" };
       res.send(result);
     });
+
+     // Add a class
+     app.post("/class", async (req, res) => {
+      const classData = req.body;
+      const result = await classesCollection.insertOne(classData);
+      res.send(result);
+    });
+    
+
+    // get all classes of instructor by email
+    app.get("/class/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { instructor_email: email };
+      const result = await classesCollection.find(query).toArray();
+      res.send(result);
+    });
+    
 
     // ...
 
@@ -182,13 +275,18 @@ async function run() {
       const query = { role: "instructor" };
       // console.log(query);
       const instructors = await usersCollection.find(query).toArray();
-      console.log(instructors);
+      // console.log(instructors);
       res.send(instructors);
     });
 
-    // ...
+     // get all classes of instructor by email
+     app.get("/class/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { instructor_email: email };
+      const result = await classesCollection.find(query).toArray();
+      res.send(result);
+    });
 
-    // ...
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
